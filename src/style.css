@@ -138,3 +138,110 @@ header .brand-line h1{margin:0;line-height:1.25}
 .spouse-minimal .spouse-quick-form{padding:10px 0;gap:14px}
 .spouse-minimal .spouse-quick-form input{font-size:16px}
 @media(max-width:390px){.spouse-minimal .checklist-main-tabs button{font-size:13px;padding:8px 4px}}
+
+/* Compact height for both checklist tab rows */
+.spouse-minimal .checklist-main-tabs,
+.spouse-minimal .spouse-tabs{
+  padding:4px;
+  gap:3px;
+  border-radius:14px;
+  margin-bottom:9px;
+}
+.spouse-minimal .checklist-main-tabs button,
+.spouse-minimal .spouse-tabs button{
+  min-height:34px;
+  height:34px;
+  padding:5px 8px;
+  border-radius:10px;
+  line-height:1.15;
+}
+.spouse-minimal .spouse-tabs .spouse-add-tab{
+  flex:0 0 34px;
+  min-width:34px;
+  width:34px;
+  min-height:34px;
+  height:34px;
+}
+
+/* Care Log-style checklist: input immediately under tabs, simple rows */
+.spouse-minimal .spouse-log-input{display:flex;align-items:center;gap:9px;margin:10px 0 16px;padding:0;background:transparent;border:0;}
+.spouse-minimal .spouse-log-input input{flex:1;min-width:0;height:45px;padding:0 14px;border:1px solid #e5ddef;border-radius:13px;background:#fff;font-size:14px;outline:none;color:#292438;}
+.spouse-minimal .spouse-log-input input:focus{border-color:#b7a3e1;}
+.spouse-minimal .spouse-log-input input::placeholder{color:#aaa4b5;}
+.spouse-minimal .spouse-log-input button{width:45px;height:45px;flex:0 0 45px;display:flex;align-items:center;justify-content:center;border:0;border-radius:13px;background:#c8bce5;color:white;}
+.spouse-minimal .spouse-log-input button:disabled{opacity:.55;}
+.spouse-minimal .spouse-log-items{display:flex;flex-direction:column;gap:8px;}
+.spouse-minimal .spouse-log-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:11px 13px;border:0;border-radius:13px;background:#f7f6fa;}
+.spouse-minimal .spouse-log-row .check{flex:0 0 23px;width:23px;height:23px;border-radius:7px;}
+.spouse-minimal .spouse-log-row>span{flex:1;min-width:0;font-size:14px;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap;touch-action:pan-y;user-select:none;-webkit-user-select:none;}
+.spouse-minimal .spouse-row-delete{border:0;background:transparent;color:#b6afc3;display:flex;align-items:center;justify-content:center;padding:4px;flex-shrink:0;}
+
+/* Lavender compact segmented tabs + compact checklist rows */
+.spouse-minimal .checklist-main-tabs,
+.spouse-minimal .spouse-tabs{
+  background:#eee7fa;
+  border:0;
+  border-radius:13px;
+  padding:3px;
+  gap:3px;
+  margin-bottom:8px;
+  box-shadow:none;
+}
+.spouse-minimal .checklist-main-tabs button,
+.spouse-minimal .spouse-tabs button{
+  height:32px;
+  min-height:32px;
+  padding:4px 9px;
+  border-radius:10px;
+  background:transparent;
+  color:#75658d;
+  box-shadow:none;
+  font-size:13px;
+  line-height:1.15;
+}
+.spouse-minimal .checklist-main-tabs button.selected,
+.spouse-minimal .spouse-tabs button.selected{
+  background:#fff;
+  color:#625378;
+  box-shadow:0 1px 4px rgba(62,44,100,.05);
+}
+.spouse-minimal .spouse-tabs .spouse-add-tab{
+  flex:0 0 32px;
+  width:32px;
+  min-width:32px;
+  height:32px;
+  min-height:32px;
+  padding:0;
+  background:transparent;
+  color:#75658d;
+}
+.spouse-minimal .spouse-log-input{margin:8px 0 10px;gap:7px}
+.spouse-minimal .spouse-log-input input{
+  height:36px;
+  border-radius:10px;
+  padding:0 11px;
+  font-size:13px;
+}
+.spouse-minimal .spouse-log-input button{
+  width:36px;
+  height:36px;
+  flex-basis:36px;
+  border-radius:10px;
+  background:#bca9e6;
+}
+.spouse-minimal .spouse-log-items{gap:6px}
+.spouse-minimal .spouse-log-row{
+  min-height:34px;
+  padding:6px 10px;
+  gap:9px;
+  border-radius:10px;
+  background:#f7f6fa;
+}
+.spouse-minimal .spouse-log-row .check{
+  flex-basis:19px;
+  width:19px;
+  height:19px;
+  border-radius:5px;
+}
+.spouse-minimal .spouse-log-row>span{font-size:13px;line-height:1.35}
+.spouse-minimal .spouse-row-delete{padding:2px}
