@@ -245,3 +245,22 @@ header .brand-line h1{margin:0;line-height:1.25}
 }
 .spouse-minimal .spouse-log-row>span{font-size:13px;line-height:1.35}
 .spouse-minimal .spouse-row-delete{padding:2px}
+
+/* iOS Safari: prevent focus auto-zoom and horizontal viewport overflow */
+@media (max-width: 767px) {
+  .spouse-minimal .spouse-log-input,
+  .spouse-minimal .spouse-log-input input,
+  .spouse-minimal .spouse-log-items,
+  .spouse-minimal .spouse-log-row {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .spouse-minimal .spouse-log-input input {
+    font-size: 16px !important;
+    line-height: normal;
+    -webkit-text-size-adjust: 100%;
+  }
+  .spouse-minimal .spouse-log-input { width: 100%; }
+  .spouse-minimal .spouse-log-input button { flex-shrink: 0; }
+}
