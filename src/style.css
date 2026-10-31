@@ -26,3 +26,56 @@ header{padding:30px clamp(28px,5vw,65px) 20px}header h1{font-size:28px}main{padd
 }
 @media(min-width:1200px){.app{width:min(100%,1180px);max-width:1180px}.bottom-nav{max-width:1180px}main{padding-left:72px;padding-right:72px}.modal{width:min(100%,650px)}}
 @media(max-width:480px){.modal-overlay{padding:10px}.modal{padding:16px;max-width:calc(100vw - 20px)}.form-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+/* iPad and desktop: keep calendar dates circular, not stretched ovals */
+.calendar-grid {grid-template-columns:repeat(7,minmax(0,1fr));width:100%;align-items:center}
+.date-cell {width:min(100%,44px);height:44px;min-width:0;min-height:44px;justify-self:center;align-self:center;aspect-ratio:1/1;border-radius:999px;flex-shrink:0;padding:0}
+.date-cell.active,.date-cell.today {border-radius:999px}
+@media (min-width:700px){
+ .calendar-panel {max-width:720px;margin-inline:auto;padding:24px}
+ .calendar-grid {row-gap:10px}
+ .date-cell {width:46px;height:46px;min-height:46px}
+ .day-events {max-width:720px;margin:20px auto 0}
+ .calendar-note {max-width:720px;margin-inline:auto}
+ .cards,.person-cards {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+ .project-card,.person-card {min-width:0}
+}
+@media (min-width:1100px){
+ .calendar-panel,.day-events,.calendar-note {max-width:790px}
+ .date-cell {width:48px;height:48px;min-height:48px}
+}
+
+/* Home spouse checklist */
+.spouse-section{margin-top:30px;padding-bottom:12px;min-width:0}
+.spouse-header{align-items:flex-start;gap:12px}
+.spouse-header h3{margin-bottom:6px}
+.spouse-intro{font-size:12px;line-height:1.6;margin:0}
+.spouse-overview{background:#f8f5ff;border:1px solid #eee8fa;border-radius:15px;padding:13px 16px;margin:14px 0;font-size:12px;color:#756995}
+.spouse-overview .progress{margin-top:8px}
+.spouse-tabs{display:flex;gap:8px;overflow-x:auto;max-width:100%;padding:3px 0 12px;scrollbar-width:thin}
+.spouse-tabs button{flex:0 0 auto;border:1px solid #e9e2f5;background:#fff;color:#756c8a;border-radius:999px;padding:9px 15px;font-size:13px;font-weight:650}
+.spouse-tabs button.selected{background:#8869e5;color:white;border-color:#8869e5}
+.spouse-list{border:1px solid #eee6f7;border-radius:20px;padding:16px;background:white;min-width:0}
+.spouse-list-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.spouse-list-head button{display:flex;align-items:center;gap:5px;border:0;background:transparent;color:#8d79bc;font-size:12px}
+.spouse-item{display:flex;align-items:flex-start;gap:12px;padding:13px 2px;border-bottom:1px solid #f1ecf7;min-width:0}
+.spouse-item>span{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.6}
+.spouse-item .check{flex-shrink:0}
+.spouse-edit{border:0;background:transparent;color:#a9a0b9;padding:4px;flex-shrink:0}
+.spouse-empty{padding:15px 0;font-size:13px}
+.spouse-list .wide-light{margin-top:14px}
+@media(min-width:700px){.spouse-section{max-width:100%;margin-top:38px}.spouse-list{padding:24px}.spouse-item{padding:16px 5px}}
+
+.checklist-main-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0 20px}
+.checklist-main-tabs button{min-width:0;min-height:56px;padding:10px 8px;background:#f6f2fc;border:1px solid #eee7fa;border-radius:14px;color:#73658e;font-size:13px;font-weight:700;line-height:1.4;overflow-wrap:anywhere}
+.checklist-main-tabs button.selected{background:#8869e5;color:white;border-color:#8869e5;box-shadow:0 4px 12px #8869e526}
+.checklist-titlebar{margin-top:12px}
+.spouse-section-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px}
+.spouse-section-toolbar strong{font-size:13px}
+@media(max-width:400px){.checklist-main-tabs{gap:5px}.checklist-main-tabs button{font-size:11px;padding:9px 5px}}
+
+/* compact brand header and inline save status */
+header .brand-line{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+header .brand-line h1{margin:0;line-height:1.25}
+.save-status{color:#a49ab6;font-size:10px;font-weight:600;white-space:nowrap;letter-spacing:0}
+@media(min-width:700px){.save-status{font-size:11px}}
