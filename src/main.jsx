@@ -17,7 +17,7 @@ const safeLoad=(userId)=>{try{let x=JSON.parse(localStorage.getItem(STORAGE+'-'+
 function pct(done,total){return total?Math.round(100*done/total):0}
 function formatDay(d){if(!d)return '';let [y,m,day]=d.split('-');return `${+m}월 ${+day}일`}
 function IconButton({children,onClick,title,className=''}){return <button type="button" className={'icon-button '+className} onClick={onClick} title={title}>{children}</button>}
-function Modal({title,onClose,children}){return <div className="modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="modal"><div className="modal-head"><h3>{title}</h3><IconButton onClick={onClose}><X size={19}/></IconButton></div>{children}</div></div>}
+function Modal({title,onClose,children}){useEffect(()=>{const old=document.body.style.overflow;document.body.style.overflow="hidden";return()=>{document.body.style.overflow=old}},[]);return <div className="modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="modal"><div className="modal-head"><h3>{title}</h3><IconButton onClick={onClose}><X size={19}/></IconButton></div>{children}</div></div>}
 function Progress({done,total}){return <div className="progress"><div style={{width:pct(done,total)+'%'}}/></div>}
 function Ring({value,label}){return <div className="ring-wrap"><div className="ring" style={{'--percent':value}}><div><strong>{value}%</strong></div></div><span>{label}</span></div>}
 function App({user,initialData,onSignOut}){
