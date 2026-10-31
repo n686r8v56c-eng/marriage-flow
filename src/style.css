@@ -79,3 +79,19 @@ header .brand-line{display:flex;align-items:center;gap:10px;min-width:0;flex-wra
 header .brand-line h1{margin:0;line-height:1.25}
 .save-status{color:#a49ab6;font-size:10px;font-weight:600;white-space:nowrap;letter-spacing:0}
 @media(min-width:700px){.save-status{font-size:11px}}
+
+/* Minimal home checklist: compact tabs and enter-to-add rows */
+.spouse-minimal{margin-top:30px}
+.spouse-minimal .spouse-header{margin-bottom:14px}
+.spouse-minimal .checklist-main-tabs{margin:0 0 12px;gap:7px}
+.spouse-minimal .checklist-main-tabs button{min-height:44px;padding:10px 6px;font-size:14px}
+.spouse-minimal .spouse-tabs{gap:7px;margin:0;padding:0 0 12px;align-items:center}
+.spouse-minimal .spouse-tabs button{padding:9px 14px;touch-action:pan-x;user-select:none;-webkit-user-select:none}
+.spouse-minimal .spouse-tabs .spouse-add-tab{border:1px dashed #d6c9ee;border-radius:50%;height:36px;width:36px;display:flex;align-items:center;justify-content:center;padding:0;background:#f8f4ff;color:#8265cc}
+.spouse-minimal .spouse-list{padding:6px 16px 12px;border-radius:16px}
+.spouse-minimal .spouse-item{align-items:center;padding:12px 0}
+.spouse-minimal .spouse-item>span{user-select:none;-webkit-user-select:none;touch-action:pan-y}
+.spouse-quick-form{display:flex;align-items:center;gap:12px;padding:12px 2px 4px}
+.spouse-quick-circle{width:23px;height:23px;border:2px solid #b8adc9;border-radius:7px;flex-shrink:0}
+.spouse-quick-form input{min-width:0;width:100%;font:inherit;font-size:14px;border:0;outline:none;background:transparent;color:#2b2540;padding:7px 0}
+.spouse-quick-form input::placeholder{color:#aaa2ba}
