@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Home, Users, Megaphone, CalendarDays, Heart, CalendarHeart, Plus, ChevronLeft, ChevronRight, ArrowLeft, MoreHorizontal, Check, Circle, Trash2, X, Download, Upload, Settings, Pencil, NotebookPen, CalendarPlus, UserRound, Sparkles, Target, Clock, CheckCircle2, ChevronDown, Camera, MessageCircle, Link2 } from 'lucide-react';
 import './style.css';
+import { supabase, configured } from './supabase.js';
 
-const STORAGE='marriage-flow-react-v1';
+const STORAGE='marriage-flow-react-v2';
 const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
 const localDate=(d=new Date())=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
 const plusDays=(n)=>{let d=new Date();d.setDate(d.getDate()+n);return localDate(d)};
@@ -11,17 +12,20 @@ const leads=[['지인 소개','소개 요청할 지인 목록 작성','지인에
 const brands=[['프로필 개선','프로필 사진 선정','자기소개 문구 작성','프로필 업데이트','지인에게 피드백 요청','피드백 반영'],['이미지 관리','스타일 방향 정하기','사진 촬영 준비','스타일링 정리','이미지 점검'],['소통 역량','대화 주제 정리','소개 연습','경청·질문 연습','피드백 반영'],['직접 설계','목표 정의','준비 항목 정리','첫 행동 실행','결과 점검']];
 const phases=[{title:'기본 조건 · 결혼 의향 확인',items:['결혼에 대한 의향 확인','현재 관계 상태 확인','기본적인 생활 상황 대화','연락 및 만남 방식 확인']},{title:'가치관 · 생활 방식 탐색',items:['일상 생활 패턴에 대해 대화','직업과 커리어 계획 확인','결혼 후 원하는 생활 방식 확인','서로 중요하게 생각하는 가치 3가지 공유']},{title:'상호 기대 · 기여 가능성',items:['관계에서 기대하는 역할 대화','서로의 강점과 기여 방식 이해','경제적 책임에 대한 생각 공유','가사와 돌봄에 대한 생각 확인']},{title:'차이점 · 우려 사항 논의',items:['서로 다른 가치관 발견','갈등 해결 방식 대화','걱정되는 부분 솔직하게 공유','합의 가능한 차이인지 확인']},{title:'현실 조건 협의',items:['거주 지역과 주거 계획 대화','재정 상황과 관리 방식 대화','가족 및 친척과의 관계 대화','결혼 시기와 준비 과정 논의']},{title:'관계 의사 확인',items:['서로의 진지한 의사 확인','관계를 지속할 방향 함께 논의','서로의 결정 존중','향후 관계 방향 합의']},{title:'공동 계획 수립',items:['공동 목표 정리','함께할 일정 정하기','구체적인 실행 계획 수립','진행 상황 함께 점검']}];
 const initial={projects:[],people:[],events:[]};
-const safeLoad=()=>{try{let x=JSON.parse(localStorage.getItem(STORAGE));return x&&Array.isArray(x.projects)&&Array.isArray(x.people)&&Array.isArray(x.events)?x:initial}catch{return initial}};
+const validDb=x=>x&&Array.isArray(x.projects)&&Array.isArray(x.people)&&Array.isArray(x.events);
+const safeLoad=(userId)=>{try{let x=JSON.parse(localStorage.getItem(STORAGE+'-'+userId));return validDb(x)?x:initial}catch{return initial}};
 function pct(done,total){return total?Math.round(100*done/total):0}
 function formatDay(d){if(!d)return '';let [y,m,day]=d.split('-');return `${+m}월 ${+day}일`}
 function IconButton({children,onClick,title,className=''}){return <button type="button" className={'icon-button '+className} onClick={onClick} title={title}>{children}</button>}
 function Modal({title,onClose,children}){return <div className="modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="modal"><div className="modal-head"><h3>{title}</h3><IconButton onClick={onClose}><X size={19}/></IconButton></div>{children}</div></div>}
 function Progress({done,total}){return <div className="progress"><div style={{width:pct(done,total)+'%'}}/></div>}
 function Ring({value,label}){return <div className="ring-wrap"><div className="ring" style={{'--percent':value}}><div><strong>{value}%</strong></div></div><span>{label}</span></div>}
-function App(){
-const [db,setDb]=useState(safeLoad),[tab,setTab]=useState('home'),[projectId,setProjectId]=useState(null),[personId,setPersonId]=useState(null),[sub,setSub]=useState('steps'),[modal,setModal]=useState(null),[month,setMonth]=useState(localDate().slice(0,7)),[date,setDate]=useState(localDate()),[filter,setFilter]=useState('all'),[projectFilter,setProjectFilter]=useState('all'),[personFilter,setPersonFilter]=useState('all');
+function App({user,initialData,onSignOut}){
+const [db,setDb]=useState(initialData),[tab,setTab]=useState('home'),[projectId,setProjectId]=useState(null),[personId,setPersonId]=useState(null),[sub,setSub]=useState('steps'),[modal,setModal]=useState(null),[month,setMonth]=useState(localDate().slice(0,7)),[date,setDate]=useState(localDate()),[filter,setFilter]=useState('all'),[projectFilter,setProjectFilter]=useState('all'),[personFilter,setPersonFilter]=useState('all');
 const uploadRef=useRef(null);
-useEffect(()=>{localStorage.setItem(STORAGE,JSON.stringify(db))},[db]);
+const [syncState,setSyncState]=useState('저장됨');
+const firstSave=useRef(true);
+useEffect(()=>{if(firstSave.current){firstSave.current=false;return;}localStorage.setItem(STORAGE+'-'+user.id,JSON.stringify(db));setSyncState('저장 중…');const timer=setTimeout(async()=>{try{const {error}=await supabase.from('marriage_flow_data').upsert({user_id:user.id,data:db,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;setSyncState('동기화됨')}catch(e){setSyncState('동기화 실패 · 백업 권장');console.error('Sync failed:',e)}},700);return()=>clearTimeout(timer)},[db,user.id]);
 const change=(fn)=>setDb(old=>{let copy=structuredClone(old);fn(copy);return copy});
 const go=(v)=>{setTab(v);setProjectId(null);setPersonId(null);setSub('steps');setFilter('all');setProjectFilter('all')};
 const newProject=(kind)=>setModal({type:'project',kind});
@@ -53,12 +57,37 @@ if(modal.type==='editStep')return <Modal title="실행 단계 수정" onClose={(
 if(modal.type==='addStep')return <Modal title="실행 단계 추가" onClose={()=>setModal(null)}><label className="field-label">추가할 단계</label><input className="field" autoFocus value={tempName} onChange={e=>setTempName(e.target.value)} placeholder="구체적인 행동을 입력하세요"/><button className="primary wide" onClick={()=>{if(!tempName.trim())return;change(s=>s.projects.find(x=>x.id===modal.id).steps.push({id:uid(),text:tempName.trim(),done:false,memo:''}));setModal(null)}}>추가</button></Modal>;
 if(modal.type==='rename')return <Modal title="프로젝트 이름 변경" onClose={()=>setModal(null)}><input className="field" value={tempName} onChange={e=>setTempName(e.target.value)}/><button className="primary wide" onClick={()=>{if(!tempName.trim())return;change(s=>{s.projects.find(p=>p.id===modal.id).title=tempName.trim()});setModal(null)}}>변경</button></Modal>;
 if(modal.type==='allResults'){let ps=db.projects.filter(p=>p.kind===modal.kind);return <Modal title="작전 성과" onClose={()=>setModal(null)}><div className="result-panel"><h3>전체 작전 성과</h3><div className="big-number">{ps.reduce((a,p)=>a+(p.outcome||0),0)}<span>건</span></div><p>개별 프로젝트의 성과 탭에서 기록할 수 있어요.</p></div></Modal>}
-if(modal.type==='settings')return <Modal title="설정 · 데이터 관리" onClose={()=>setModal(null)}><p className="hint">데이터는 현재 브라우저에 자동 저장됩니다. 다른 기기와 자동 동기화되지는 않아요.</p><button className="soft-button wide" onClick={backup}><Download size={17}/> JSON 백업 다운로드</button><button className="soft-button wide" onClick={()=>uploadRef.current?.click()}><Upload size={17}/> JSON 백업 불러오기</button><input hidden ref={uploadRef} type="file" accept="application/json,.json" onChange={restore}/></Modal>;return null}
+if(modal.type==='settings')return <Modal title="설정 · 데이터 관리" onClose={()=>setModal(null)}><p className="hint">{user.email} · {syncState}. Supabase에 저장되며 같은 계정으로 기기 간 불러올 수 있어요.</p><button className="soft-button wide" onClick={onSignOut}>로그아웃</button><button className="soft-button wide" onClick={backup}><Download size={17}/> JSON 백업 다운로드</button><button className="soft-button wide" onClick={()=>uploadRef.current?.click()}><Upload size={17}/> JSON 백업 불러오기</button><input hidden ref={uploadRef} type="file" accept="application/json,.json" onChange={restore}/></Modal>;return null}
 function backup(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='marriage-flow-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function restore(e){let f=e.target.files?.[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.projects)||!Array.isArray(d.people)||!Array.isArray(d.events))throw Error('Invalid format');if(confirm('현재 데이터를 백업 파일로 교체할까요?')){setDb(d);setModal(null);go('home')}}catch{alert('올바른 Marriage Flow JSON 파일이 아니에요.')}e.target.value=''}
-return <div className="app-shell"><div className="app"><header><div><span className="top-kicker">YOUR RELATIONSHIP PLANNER</span><h1>Marriage Flow</h1></div><IconButton title="설정" onClick={()=>setModal({type:'settings'})}><Settings size={21}/></IconButton></header><main key={tab}>{tab==='home'?homePage():tab==='lead'||tab==='brand'?projectPage(tab):tab==='people'?personPage():calendarPage(tab==='operations'?'operation':'relation')}</main><nav className="bottom-nav">{menu.map(([id,label,I])=><button key={id} className={tab===id?'active':''} onClick={()=>go(id)}><I size={21} strokeWidth={tab===id?2.6:1.9}/><span>{label}</span></button>)}</nav></div>{renderModal()}</div>
+return <div className="app-shell"><div className="app"><header><div><span className="top-kicker">YOUR RELATIONSHIP PLANNER · {syncState}</span><h1>Marriage Flow</h1></div><IconButton title="설정" onClick={()=>setModal({type:'settings'})}><Settings size={21}/></IconButton></header><main key={tab}>{tab==='home'?homePage():tab==='lead'||tab==='brand'?projectPage(tab):tab==='people'?personPage():calendarPage(tab==='operations'?'operation':'relation')}</main><nav className="bottom-nav">{menu.map(([id,label,I])=><button key={id} className={tab===id?'active':''} onClick={()=>go(id)}><I size={21} strokeWidth={tab===id?2.6:1.9}/><span>{label}</span></button>)}</nav></div>{renderModal()}</div>
 }
 function PageTitle({title,description}){return <div className="page-heading"><h2>{title}</h2><p>{description}</p></div>}
 function Empty({icon:Icon,title,detail}){return <div className="empty"><div><Icon size={28}/></div><strong>{title}</strong><p>{detail}</p></div>}
 
-createRoot(document.getElementById('root')).render(<App/>);
+function AuthGate(){
+ const [session,setSession]=useState(null),[status,setStatus]=useState('loading'),[data,setData]=useState(null);
+ const [mode,setMode]=useState('signin'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ useEffect(()=>{if(!configured){setStatus('unconfigured');return;}let alive=true;
+  supabase.auth.getSession().then(({data:{session},error})=>{if(!alive)return;if(error)setMessage(error.message);setSession(session);setStatus(session?'fetch':'guest')});
+  const {data:sub}=supabase.auth.onAuthStateChange((_event,s)=>{if(!alive)return;setSession(s);setStatus(s?'fetch':'guest');setData(null)});
+  return()=>{alive=false;sub.subscription.unsubscribe()};},[]);
+ useEffect(()=>{if(status!=='fetch'||!session?.user)return;let alive=true;const userId=session.user.id;
+  (async()=>{const {data:record,error}=await supabase.from('marriage_flow_data').select('data').eq('user_id',userId).maybeSingle();if(!alive)return;
+   if(error){setMessage('데이터를 불러오지 못했어요: '+error.message);setStatus('load-error');return;}
+   const loaded=validDb(record?.data)?record.data:safeLoad(userId);
+   setData(loaded);setStatus('ready');})();return()=>{alive=false}},[status,session?.user?.id]);
+ const submit=async(e)=>{e.preventDefault();if(busy)return;setBusy(true);setMessage('');try{
+  if(mode==='signup'){const {data,error}=await supabase.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:window.location.origin}});if(error)throw error;setMessage(data.session?'회원가입 및 로그인 완료!':'회원가입 요청 완료! 이메일 인증 링크를 확인해 주세요.');}
+  else if(mode==='reset'){const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:window.location.origin});if(error)throw error;setMessage('비밀번호 재설정 메일을 확인해 주세요.');}
+  else{const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)throw error;}
+ }catch(err){setMessage(err.message||'인증에 실패했어요.')}finally{setBusy(false)}};
+ if(status==='ready'&&session?.user&&data)return <App key={session.user.id} user={session.user} initialData={data} onSignOut={()=>supabase.auth.signOut()}/>;
+ return <div className="auth-shell"><div className="auth-card"><div className="auth-symbol"><Heart size={28}/></div><span className="auth-eyebrow">YOUR RELATIONSHIP PLANNER</span><h1>Marriage Flow</h1><p className="auth-intro">좋은 만남을 위한 나만의 실행 플래너</p>
+ {status==='unconfigured'?<div className="auth-alert">Cloudflare Pages에 VITE_SUPABASE_URL과 VITE_SUPABASE_PUBLISHABLE_KEY를 설정해 주세요.</div>:
+ status==='loading'||status==='fetch'?<p className="auth-note">계정과 데이터를 불러오는 중…</p>:
+ status==='load-error'?<div><p className="auth-alert">{message}</p><button className="primary wide" onClick={()=>setStatus('fetch')}>다시 시도</button><button className="auth-switch" onClick={()=>supabase.auth.signOut()}>다른 계정으로 로그인</button></div>:
+ <><div className="auth-switcher"><button className={mode==='signin'?'active':''} onClick={()=>{setMode('signin');setMessage('')}}>로그인</button><button className={mode==='signup'?'active':''} onClick={()=>{setMode('signup');setMessage('')}}>회원가입</button></div><form onSubmit={submit}><label className="field-label">이메일</label><input className="field" type="email" autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/>{mode!=='reset'&&<><label className="field-label">비밀번호</label><input className="field" type="password" minLength={6} autoComplete={mode==='signup'?'new-password':'current-password'} required value={password} onChange={e=>setPassword(e.target.value)} placeholder="6자 이상"/></>}<button className="primary wide" disabled={busy}>{busy?'처리 중…':mode==='signup'?'회원가입':mode==='reset'?'재설정 메일 보내기':'로그인'}</button></form>{message&&<p className="auth-note" role="status">{message}</p>}<button className="auth-switch" onClick={()=>{setMode(mode==='reset'?'signin':'reset');setMessage('')}}>{mode==='reset'?'로그인으로 돌아가기':'비밀번호를 잊으셨나요?'}</button></>}
+ </div></div>;
+}
+createRoot(document.getElementById('root')).render(<AuthGate/>);
