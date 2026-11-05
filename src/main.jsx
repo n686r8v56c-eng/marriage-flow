@@ -4,6 +4,7 @@ import { Home, Users, Megaphone, CalendarDays, Heart, CalendarHeart, Plus, Chevr
 import './style.css';
 import { supabase, configured } from './supabase.js';
 
+const sameSnapshot=(a,b)=>{const order=x=>Array.isArray(x)?x.map(order):x&&typeof x==='object'?Object.fromEntries(Object.keys(x).sort().map(k=>[k,order(x[k])])):x;return JSON.stringify(order(a))===JSON.stringify(order(b))};
 const STORAGE='marriage-flow-react-v2';
 const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
 const localDate=(d=new Date())=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
@@ -34,7 +35,7 @@ useEffect(()=>{if(firstSave.current){firstSave.current=false;return;}try{localSt
  const {data:row,error:readError}=await supabase.from('marriage_flow_data').select('data').eq('user_id',user.id).maybeSingle();
  if(readError)throw readError;
  if(saveBlocked.current)return;
- if(JSON.stringify(row?.data??null)!==JSON.stringify(serverBaseline.current)){
+ if(!sameSnapshot(row?.data??null,serverBaseline.current)){
   saveBlocked.current=true;try{localStorage.setItem(STORAGE+'-conflict-'+user.id,JSON.stringify(db))}catch{}
   setSyncState('다른 기기 변경 감지 · 저장 중단 (기기 백업 유지)');return;
  }
