@@ -20,7 +20,7 @@ function IconButton({children,onClick,title,className=''}){return <button type="
 function Modal({title,onClose,children}){useEffect(()=>{const old=document.body.style.overflow;document.body.style.overflow="hidden";return()=>{document.body.style.overflow=old}},[]);return <div className="modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="modal"><div className="modal-head"><h3>{title}</h3><IconButton onClick={onClose}><X size={19}/></IconButton></div>{children}</div></div>}
 function Progress({done,total}){return <div className="progress"><div style={{width:pct(done,total)+'%'}}/></div>}
 function Ring({value,label}){return <div className="ring-wrap"><div className="ring" style={{'--percent':value}}><div><strong>{value}%</strong></div></div><span>{label}</span></div>}
-function App({user,initialData,onSignOut}){
+function App({user,initialData,onSignOut,remoteRaw}){
 const [db,setDb]=useState(initialData),[tab,setTab]=useState('home'),[projectId,setProjectId]=useState(null),[personId,setPersonId]=useState(null),[sub,setSub]=useState('steps'),[modal,setModal]=useState(null),[month,setMonth]=useState(localDate().slice(0,7)),[date,setDate]=useState(localDate()),[filter,setFilter]=useState('all'),[projectFilter,setProjectFilter]=useState('all'),[personFilter,setPersonFilter]=useState('all');
 const uploadRef=useRef(null);
 const [syncState,setSyncState]=useState('저장됨');
@@ -29,8 +29,18 @@ const [checklistTab,setChecklistTab]=useState('partner');
 const [quickItem,setQuickItem]=useState('');
 const holdTimer=useRef(null);
 const holdFired=useRef(false);
-const firstSave=useRef(true);
-useEffect(()=>{if(firstSave.current){firstSave.current=false;return;}localStorage.setItem(STORAGE+'-'+user.id,JSON.stringify(db));setSyncState('저장 중…');const timer=setTimeout(async()=>{try{const {error}=await supabase.from('marriage_flow_data').upsert({user_id:user.id,data:db,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;setSyncState('동기화됨')}catch(e){setSyncState('동기화 실패 · 백업 권장');console.error('Sync failed:',e)}},700);return()=>clearTimeout(timer)},[db,user.id]);
+const firstSave=useRef(true),serverBaseline=useRef(remoteRaw??null),saveBlocked=useRef(false);
+useEffect(()=>{if(firstSave.current){firstSave.current=false;return;}try{localStorage.setItem(STORAGE+'-'+user.id,JSON.stringify(db))}catch{}if(saveBlocked.current)return;setSyncState('저장 중…');const timer=setTimeout(async()=>{try{
+ const {data:row,error:readError}=await supabase.from('marriage_flow_data').select('data').eq('user_id',user.id).maybeSingle();
+ if(readError)throw readError;
+ if(saveBlocked.current)return;
+ if(JSON.stringify(row?.data??null)!==JSON.stringify(serverBaseline.current)){
+  saveBlocked.current=true;try{localStorage.setItem(STORAGE+'-conflict-'+user.id,JSON.stringify(db))}catch{}
+  setSyncState('다른 기기 변경 감지 · 저장 중단 (기기 백업 유지)');return;
+ }
+ const {error}=await supabase.from('marriage_flow_data').upsert({user_id:user.id,data:db,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+ if(error)throw error;serverBaseline.current=db;setSyncState('동기화됨')
+ }catch(e){setSyncState('동기화 실패 · 기기 백업 유지');console.error('Sync failed:',e)}},700);return()=>clearTimeout(timer)},[db,user.id]);
 const change=(fn)=>setDb(old=>{let copy=structuredClone(old);fn(copy);return copy});
 const go=(v)=>{setTab(v);setProjectId(null);setPersonId(null);setSub('steps');setFilter('all');setProjectFilter('all')};
 const newProject=(kind)=>setModal({type:'project',kind});
@@ -96,23 +106,23 @@ function PageTitle({title,description}){return <div className="page-heading"><h2
 function Empty({icon:Icon,title,detail}){return <div className="empty"><div><Icon size={28}/></div><strong>{title}</strong><p>{detail}</p></div>}
 
 function AuthGate(){
- const [session,setSession]=useState(null),[status,setStatus]=useState('loading'),[data,setData]=useState(null);
+ const [session,setSession]=useState(null),[status,setStatus]=useState('loading'),[data,setData]=useState(null),[remoteRaw,setRemoteRaw]=useState(null);
  const [mode,setMode]=useState('signin'),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
  useEffect(()=>{if(!configured){setStatus('unconfigured');return;}let alive=true;
   supabase.auth.getSession().then(({data:{session},error})=>{if(!alive)return;if(error)setMessage(error.message);setSession(session);setStatus(session?'fetch':'guest')});
-  const {data:sub}=supabase.auth.onAuthStateChange((_event,s)=>{if(!alive)return;setSession(s);setStatus(s?'fetch':'guest');setData(null)});
+  const {data:sub}=supabase.auth.onAuthStateChange((_event,s)=>{if(!alive)return;setSession(s);setStatus(s?'fetch':'guest');setData(null);setRemoteRaw(null)});
   return()=>{alive=false;sub.subscription.unsubscribe()};},[]);
  useEffect(()=>{if(status!=='fetch'||!session?.user)return;let alive=true;const userId=session.user.id;
   (async()=>{const {data:record,error}=await supabase.from('marriage_flow_data').select('data').eq('user_id',userId).maybeSingle();if(!alive)return;
    if(error){setMessage('데이터를 불러오지 못했어요: '+error.message);setStatus('load-error');return;}
    const loaded=validDb(record?.data)?record.data:safeLoad(userId);
-   setData(loaded);setStatus('ready');})();return()=>{alive=false}},[status,session?.user?.id]);
+   setRemoteRaw(record?.data??null);setData(loaded);setStatus('ready');})();return()=>{alive=false}},[status,session?.user?.id]);
  const submit=async(e)=>{e.preventDefault();if(busy)return;setBusy(true);setMessage('');try{
   if(mode==='signup'){const {data,error}=await supabase.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:window.location.origin}});if(error)throw error;setMessage(data.session?'회원가입 및 로그인 완료!':'회원가입 요청 완료! 이메일 인증 링크를 확인해 주세요.');}
   else if(mode==='reset'){const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:window.location.origin});if(error)throw error;setMessage('비밀번호 재설정 메일을 확인해 주세요.');}
   else{const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)throw error;}
  }catch(err){setMessage(err.message||'인증에 실패했어요.')}finally{setBusy(false)}};
- if(status==='ready'&&session?.user&&data)return <App key={session.user.id} user={session.user} initialData={data} onSignOut={()=>supabase.auth.signOut()}/>;
+ if(status==='ready'&&session?.user&&data)return <App key={session.user.id} user={session.user} initialData={data} remoteRaw={remoteRaw} onSignOut={()=>supabase.auth.signOut()}/>;
  return <div className="auth-shell"><div className="auth-card"><div className="auth-symbol"><Heart size={28}/></div><h1>Marriage Flow</h1><p className="auth-intro">좋은 만남을 위한 나만의 실행 플래너</p>
  {status==='unconfigured'?<div className="auth-alert">Cloudflare Pages에 VITE_SUPABASE_URL과 VITE_SUPABASE_PUBLISHABLE_KEY를 설정해 주세요.</div>:
  status==='loading'||status==='fetch'?<p className="auth-note">계정과 데이터를 불러오는 중…</p>:
