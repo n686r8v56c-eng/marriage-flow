@@ -1,0 +1,12 @@
+// KBS 편스토랑 1차 공개 회차/메뉴 *색인* (레시피 본문 복제 아님).
+// 실제 재료·분량·순서는 KBS 공식 레시피 페이지에서 직접 확인 후 등록.
+export const RECIPE_SOURCES=[
+ {id:'kbs-344-yuri',show:'신상출시 편스토랑',episode:344,date:'2026-11-05',person:'이유리',name:'호텔식 우엉잡채',kind:'반찬',story:'대용량 요리와 새 집 공개',status:'회차 소개에 메뉴 등장·레시피 미검증',url:'https://vod.kbs.co.kr/index.html?broadcast_complete_yn=N&local_station_code=00&program_code=T2019-0286&program_id=PS-2026198005-01-000&section_code=04&section_id=11202&section_sub_code=02&sname=vod&source=episode&stype=vod'},
+ {id:'kbs-344-oyuna',show:'신상출시 편스토랑',episode:344,date:'2026-11-05',person:'오윤아',name:'들기름 콩국수',kind:'면',story:'건강식·신혼 일상',status:'회차 소개에 메뉴 등장·레시피 미검증',url:'https://vod.kbs.co.kr/index.html?broadcast_complete_yn=N&local_station_code=00&program_code=T2019-0286&program_id=PS-2026198005-01-000&section_code=04&section_id=11202&section_sub_code=02&sname=vod&source=episode&stype=vod'},
+ {id:'kbs-344-porridge',show:'신상출시 편스토랑',episode:344,date:'2026-11-05',person:'오윤아',name:'콩물 단팥죽',kind:'간식',story:'남편 취향을 고려한 간편식',status:'회차 소개에 메뉴 등장·레시피 미검증',url:'https://vod.kbs.co.kr/index.html?broadcast_complete_yn=N&local_station_code=00&program_code=T2019-0286&program_id=PS-2026198005-01-000&section_code=04&section_id=11202&section_sub_code=02&sname=vod&source=episode&stype=vod'},
+ {id:'kbs-336-nambo',show:'신상출시 편스토랑',episode:336,date:'2026-09-03',person:'남보라 가족',name:'오이소박이',kind:'반찬',story:'가족 반찬가게와 어머니의 요리',status:'회차 소개에 메뉴 등장·레시피 미검증',url:'https://vod.kbs.co.kr/index.html?broadcast_complete_yn=N&local_station_code=00&program_code=T2019-0286&program_id=PS-2026158406-01-000&section_code=04&section_id=11202&section_sub_code=02&sname=vod&source=episode&stype=vod'},
+ {id:'kbs-338-jiseung',show:'신상출시 편스토랑',episode:338,date:'2026-09-17',person:'지승현',name:'쪼림닭',kind:'메인',story:'부자(父子) 요리 비교와 가족 심사',status:'회차 소개에 메뉴 등장·레시피 미검증',url:'https://vod.kbs.co.kr/index.html?broadcast_complete_yn=N&local_station_code=00&program_code=T2019-0286&program_id=PS-2026167582-01-000&section_code=04&section_sub_code=02&sname=vod&source=episode&stype=vod'},
+ {id:'kbs-220-ryu',show:'신상출시 편스토랑',episode:220,date:'2024-04-12',person:'류수영',name:'두부김치',kind:'메인',story:'냉장고 속 재료로 만드는 당장 레시피',status:'회차 소개에 메뉴 등장·레시피 미검증',url:'https://vod.kbs.co.kr/index.html?program_id=PS-2024063043-01-000&sname=vod&source=episode&stype=vod'}
+];
+export const RECIPE_KINDS=['전체','메인','반찬','국·찌개','면','밥','간식','디저트','소스·양념','음료','기타'];
+export const RECIPE_DETAIL_GROUPS=['재료','조리 기법','맛·식감','시간·도구','관계·상황','변형·응용','검증·주의'];
