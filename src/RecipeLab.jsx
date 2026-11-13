@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useState,useRef} from 'react';
 import {RECIPE_SOURCES,RECIPE_KINDS,RECIPE_DETAIL_GROUPS} from './recipeLabData.js';
 import './RecipeLab.css';
 
@@ -16,13 +16,17 @@ function urlOK(x){try{const a=new URL(x);return ['https:','http:'].includes(a.pr
 const defaultForm=()=>({name:'',person:'',episode:'',date:'',kind:'메인',url:'',story:'',ingredients:'',steps:'',detail:'',group:'조리 기법',note:''});
 export default function RecipeLab({userId}){
  const [data,setData]=useState(empty),[ready,setReady]=useState(false),[message,setMessage]=useState('');
+ const dataRef=useRef(empty());const writeQueue=useRef(Promise.resolve());
  const [tab,setTab]=useState('요리카드'),[query,setQuery]=useState(''),[person,setPerson]=useState('전체'),[kind,setKind]=useState('전체'),[selectedDetail,setSelectedDetail]=useState(''),[selectedId,setSelectedId]=useState('');
  const [form,setForm]=useState(defaultForm),[editId,setEditId]=useState(''),[addDetail,setAddDetail]=useState({name:'',group:'조리 기법',note:''});
  const key=keyFor(userId);
- useEffect(()=>{let active=true;setReady(false);load(key).then(saved=>{if(active){setData(saved&&typeof saved==='object'?{...empty(),...saved}:empty());setReady(true)}}).catch(e=>{if(active){setMessage('로컬 저장 데이터를 열지 못했어: '+e.message);setReady(true)}});return()=>{active=false}},[key]);
+ useEffect(()=>{let active=true;setReady(false);load(key).then(saved=>{if(active){const next=saved&&typeof saved==='object'?{...empty(),...saved}:empty();dataRef.current=next;setData(next);setReady(true)}}).catch(e=>{if(active){setMessage('로컬 저장 데이터를 열지 못했어: '+e.message);setReady(true)}});return()=>{active=false}},[key]);
  const cards=[...RECIPE_SOURCES,...arr(data.cards).filter(c=>!RECIPE_SOURCES.some(s=>s.id===c.id))].map(c=>({...c,...(data.annotations?.[c.id]||{}),id:c.id}));
  const people=['전체',...Array.from(new Set(cards.map(c=>safe(c.person)||'미확인'))).sort((a,b)=>a.localeCompare(b,'ko'))];
- const save=fn=>{if(!ready){setMessage('데이터 준비 중이야.');return}const next=fn(data);store(key,next).then(()=>{setData(next);setMessage('이 기기에 저장했어. 기기 변경 전 JSON 백업을 권장해.')}).catch(e=>setMessage('저장 실패: '+e.message))};
+ const save=fn=>{if(!ready){setMessage('데이터 준비 중이야.');return}
+  const next=fn(dataRef.current);dataRef.current=next;
+  writeQueue.current=writeQueue.current.catch(()=>{}).then(()=>store(key,next)).then(()=>{setData(next);setMessage('이 기기에 저장했어. 기기 변경 전 JSON 백업을 권장해.')}).catch(e=>{setMessage('저장 실패: '+e.message+' · 현재 페이지의 입력 데이터는 JSON 백업으로 보존해 줘.');setData(next)});
+ };
  const filtered=cards.filter(c=>(person==='전체'||c.person===person)&&(kind==='전체'||c.kind===kind)&&[c.name,c.person,c.story,c.episode].some(x=>String(x||'').toLowerCase().includes(query.toLowerCase())));
  const details=Array.from(new Map(cards.flatMap(c=>arr(c.details).map(d=>[safe(d.name),{name:safe(d.name),group:d.group||'기타'}])).filter(([name])=>name)).values()).sort((a,b)=>a.name.localeCompare(b.name,'ko'));
  const detailMatches=cards.filter(c=>arr(c.details).some(d=>d.name===selectedDetail)&&(person==='전체'||c.person===person)&&(kind==='전체'||c.kind===kind));
@@ -44,7 +48,7 @@ export default function RecipeLab({userId}){
  };
  const download=()=>fileExport('recipe-lab-'+today()+'.json',{format:'marriage-flow-recipe-lab-v1',exportedAt:new Date().toISOString(),payload:data});
  const importFile=async e=>{const f=e.target.files?.[0];if(!f)return;try{const raw=JSON.parse(await f.text());if(raw.format!=='marriage-flow-recipe-lab-v1'||!raw.payload||!Array.isArray(raw.payload.cards)){throw Error('RECIPE LAB 백업 JSON 형식이 아니야')}
-  save(d=>({...d,cards:[...arr(d.cards),...arr(raw.payload.cards).filter(x=>!arr(d.cards).some(y=>x.id===y.id))],annotations:{...raw.payload.annotations,...d.annotations}}));setMessage('기존 카드와 메모를 유지하며 ID 기준으로 병합했어.');
+  save(d=>({...d,cards:[...arr(d.cards),...arr(raw.payload.cards).filter(x=>!arr(d.cards).some(y=>x.id===y.id))],annotations:{...raw.payload.annotations,...d.annotations}}));
  }catch(err){setMessage('가져오기 실패: '+err.message)}e.target.value=''};
  return <section className="rl-root">
  <div className="rl-top"><div><h2>RECIPE LAB</h2><p>편스토랑 · 요리카드 × 레시피 분석 × 이야기 구조</p></div><span>공식 출처 연결형 연구</span></div>
